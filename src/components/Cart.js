@@ -202,3 +202,4 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
 };
 
 export default Cart;
+    

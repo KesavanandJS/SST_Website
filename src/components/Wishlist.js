@@ -78,3 +78,4 @@ const Wishlist = ({ items, onClose, onRemove, onAddToCart }) => {
 };
 
 export default Wishlist;
+  

@@ -78,7 +78,7 @@ const Home = ({ user, onLogout }) => {
         waterResistance: "IPX4"
       }
     },
-    {
+    {  
       id: 5,
       name: "Dell XPS 13 Plus",
       price: 119999,

@@ -16,7 +16,7 @@ const ProductDetails = ({ product, onClose, addToCart, addToWishlist, comparePro
     product.image.replace('300x300', '300x300?bg=f0f0f0'),
     product.image.replace('300x300', '300x300?bg=e0e0e0')
   ];
-
+  
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
