@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './Cart.css';
 
 const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
@@ -38,8 +38,17 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
     }).format(price);
   };
 
+  const getTotalPrice = () => {
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discountAmount = (subtotal * discount) / 100;
+    const tax = (subtotal - discountAmount) * 0.18;
+    const shipping = subtotal > 8000 ? 0 : 200;
+    return subtotal - discountAmount + tax + shipping;
+  };
+
   const applyCoupon = () => {
     const coupon = coupons[couponCode.toUpperCase()];
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     if (coupon && subtotal >= coupon.minAmount) {
       setDiscount(coupon.discount);
       alert(`Coupon applied! ${coupon.discount}% discount`);
@@ -54,7 +63,7 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
   const discountAmount = (subtotal * discount) / 100;
   const tax = (subtotal - discountAmount) * 0.18; // 18% GST
   const shipping = subtotal > 8000 ? 0 : 200; // Free shipping over ₹8000
-  const total = subtotal - discountAmount + tax + shipping;
+  const total = getTotalPrice();
 
   const handleCheckout = async () => {
     setIsCheckingOut(true);
@@ -68,7 +77,7 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
         },
         body: JSON.stringify({
           items: cartItems,
-          total: total,
+          total: getTotalPrice(),
           couponCode: couponCode,
           discount: discountAmount
         })
@@ -172,7 +181,7 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
                   </div>
                   <div className="price-row total">
                     <span>Total:</span>
-                    <span>{formatPrice(total)}</span>
+                    <span>{formatPrice(getTotalPrice())}</span>
                   </div>
                 </div>
                 
@@ -181,7 +190,7 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
                   onClick={handleCheckout}
                   disabled={isCheckingOut}
                 >
-                  {isCheckingOut ? 'Processing...' : 'Checkout'}
+                  {isCheckingOut ? 'Processing...' : `Checkout - ${formatPrice(getTotalPrice())}`}
                 </button>
               </div>
             </>
