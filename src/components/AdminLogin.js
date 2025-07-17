@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Auth.css';
 
-const Login = ({ switchToSignup, onLogin }) => {
+const AdminLogin = ({ onAdminLogin, switchToUserLogin }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -36,7 +36,7 @@ const Login = ({ switchToSignup, onLogin }) => {
       setIsLoading(true);
       
       try {
-        const response = await fetch('http://localhost:8000/api/login', {
+        const response = await fetch('http://localhost:8000/api/admin/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -47,14 +47,14 @@ const Login = ({ switchToSignup, onLogin }) => {
         const result = await response.json();
 
         if (result.success) {
-          localStorage.setItem('token', result.token);
-          localStorage.setItem('user', JSON.stringify(result.user));
-          onLogin(result.user);
+          localStorage.setItem('adminToken', result.token);
+          localStorage.setItem('admin', JSON.stringify(result.admin));
+          onAdminLogin(result.admin);
         } else {
           setErrors({ general: result.message });
         }
       } catch (error) {
-        console.error('Login error:', error);
+        console.error('Admin login error:', error);
         setErrors({ general: 'Network error. Please try again.' });
       } finally {
         setIsLoading(false);
@@ -67,12 +67,12 @@ const Login = ({ switchToSignup, onLogin }) => {
   return (
     <div className="auth-container">
       <div className="auth-form">
-        <h2>Login</h2>
+        <h2>🔐 Admin Login</h2>
         <form onSubmit={handleSubmit}>
           {errors.general && <div className="error-message general-error">{errors.general}</div>}
           
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">👤 Username</label>
             <input
               type="text"
               id="username"
@@ -80,14 +80,14 @@ const Login = ({ switchToSignup, onLogin }) => {
               value={formData.username}
               onChange={handleChange}
               className={errors.username ? 'error' : ''}
-              placeholder="Enter your username"
+              placeholder="Enter admin username"
               disabled={isLoading}
             />
             {errors.username && <span className="error-message">{errors.username}</span>}
           </div>
           
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">🔒 Password</label>
             <input
               type="password"
               id="password"
@@ -95,21 +95,21 @@ const Login = ({ switchToSignup, onLogin }) => {
               value={formData.password}
               onChange={handleChange}
               className={errors.password ? 'error' : ''}
-              placeholder="Enter your password"
+              placeholder="Enter admin password"
               disabled={isLoading}
             />
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
           
           <button type="submit" className="auth-button" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Signing in...' : '🚀 Login as Admin'}
           </button>
         </form>
         
         <p className="auth-switch">
-          Don't have an account? 
-          <button type="button" onClick={switchToSignup} className="link-button">
-            Sign up here
+          Not an admin? 
+          <button type="button" onClick={switchToUserLogin} className="link-button">
+            👤 User Login
           </button>
         </p>
       </div>
@@ -117,7 +117,4 @@ const Login = ({ switchToSignup, onLogin }) => {
   );
 };
 
-export default Login;
-
-
-
+export default AdminLogin;

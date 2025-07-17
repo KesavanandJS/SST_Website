@@ -1,0 +1,197 @@
+.compare-modal {
+  background: white;
+  border-radius: 12px;
+  width: 95%;
+  max-width: 1200px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clear-all-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.compare-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.empty-compare {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.compare-table {
+  width: 100%;
+}
+
+.compare-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 200px repeat(auto-fit, minmax(250px, 1fr));
+  background: white;
+}
+
+.row-label {
+  background: #f9fafb;
+  padding: 16px;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e5e7eb;
+}
+
+.compare-cell {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+.product-cell {
+  padding: 20px 16px;
+}
+
+.remove-compare-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-cell img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.product-cell h4 {
+  margin: 0 0 4px 0;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.product-cell .brand {
+  color: #6b7280;
+  font-size: 12px;
+  margin: 0 0 8px 0;
+}
+
+.product-cell .price {
+  color: #3b82f6;
+  font-weight: 700;
+  font-size: 16px;
+  margin: 0 0 12px 0;
+}
+
+.add-to-cart-compare {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.price-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.price-compare .current {
+  font-weight: 700;
+  color: #111827;
+}
+
+.price-compare .original {
+  font-size: 12px;
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+.rating-stars {
+  color: #fbbf24;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.in-stock {
+  color: #10b981;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.out-of-stock {
+  color: #ef4444;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .compare-row {
+    grid-template-columns: 150px repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .row-label {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+  
+  .compare-cell {
+    padding: 12px 8px;
+  }
+  
+  .product-cell img {
+    width: 80px;
+    height: 80px;
+  }
+}

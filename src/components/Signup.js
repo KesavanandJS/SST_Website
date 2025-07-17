@@ -8,7 +8,8 @@ const Signup = ({ switchToLogin }) => {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'user' // Add role field
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +79,8 @@ const Signup = ({ switchToLogin }) => {
             firstName: formData.firstName,
             lastName: formData.lastName,
             email: formData.email,
-            password: formData.password
+            password: formData.password,
+            role: formData.role // Include role in the request
           })
         });
 
@@ -107,6 +109,22 @@ const Signup = ({ switchToLogin }) => {
         <h2>Sign Up</h2>
         <form onSubmit={handleSubmit}>
           {errors.general && <div className="error-message general-error">{errors.general}</div>}
+          
+          <div className="form-group">
+            <label htmlFor="role">Account Type</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className={errors.role ? 'error' : ''}
+              disabled={isLoading}
+            >
+              <option value="user">User Account</option>
+              <option value="admin">Admin Account</option>
+            </select>
+            {errors.role && <span className="error-message">{errors.role}</span>}
+          </div>
           
           <div className="form-group">
             <label htmlFor="username">Username</label>
