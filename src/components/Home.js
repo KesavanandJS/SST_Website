@@ -32,6 +32,68 @@ const Home = ({ user, onLogout }) => {
     fetchProducts();
   }, [selectedCategory, filters]);
 
+  useEffect(() => {
+    if (user) {
+      loadUserData();
+    }
+  }, [user]);
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
+  const loadUserData = async () => {
+    try {
+      const headers = getAuthHeaders();
+      
+      // Load cart
+      const cartResponse = await fetch('http://localhost:8000/api/user/cart', { headers });
+      if (cartResponse.ok) {
+        const cartResult = await cartResponse.json();
+        if (cartResult.success) {
+          const cartItems = cartResult.cart.map(item => ({
+            ...item.productId,
+            _id: item.productId._id,
+            quantity: item.quantity
+          }));
+          setCart(cartItems);
+        }
+      }
+
+      // Load wishlist
+      const wishlistResponse = await fetch('http://localhost:8000/api/user/wishlist', { headers });
+      if (wishlistResponse.ok) {
+        const wishlistResult = await wishlistResponse.json();
+        if (wishlistResult.success) {
+          const wishlistItems = wishlistResult.wishlist.map(item => ({
+            ...item.productId,
+            _id: item.productId._id
+          }));
+          setWishlist(wishlistItems);
+        }
+      }
+
+      // Load compare list
+      const compareResponse = await fetch('http://localhost:8000/api/user/compare', { headers });
+      if (compareResponse.ok) {
+        const compareResult = await compareResponse.json();
+        if (compareResult.success) {
+          const compareItems = compareResult.compare.map(item => ({
+            ...item.productId,
+            _id: item.productId._id
+          }));
+          setCompareList(compareItems);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
   const fetchProducts = async () => {
     try {
       const params = new URLSearchParams();
@@ -75,39 +137,91 @@ const Home = ({ user, onLogout }) => {
     return matchesSearch && matchesCategory && matchesPrice && matchesBrand && matchesRating;
   });
 
-  const addToCart = (product) => {
-    const existingItem = cart.find(item => item._id === product._id);
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item._id === product._id 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+  const addToCart = async (product) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch('http://localhost:8000/api/user/cart', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ productId: product._id, quantity: 1 })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const cartItems = result.cart.map(item => ({
+            ...item.productId,
+            _id: item.productId._id,
+            quantity: item.quantity
+          }));
+          setCart(cartItems);
+          alert(`${product.name} added to cart!`);
+        }
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to add to cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add to cart');
     }
-    alert(`${product.name} added to cart!`);
   };
 
-  const addToWishlist = (product) => {
-    if (!wishlist.find(item => item._id === product._id)) {
-      setWishlist([...wishlist, product]);
-      alert(`${product.name} added to wishlist!`);
-    } else {
-      alert('Product already in wishlist!');
+  const addToWishlist = async (product) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch('http://localhost:8000/api/user/wishlist', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ productId: product._id })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const wishlistItems = result.wishlist.map(item => ({
+            ...item.productId,
+            _id: item.productId._id
+          }));
+          setWishlist(wishlistItems);
+          alert(`${product.name} added to wishlist!`);
+        }
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to add to wishlist');
+      }
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      alert('Failed to add to wishlist');
     }
   };
 
-  const addToCompare = (product) => {
-    if (compareList.length >= 3) {
-      alert('You can only compare up to 3 products!');
-      return;
-    }
-    if (!compareList.find(item => item._id === product._id)) {
-      setCompareList([...compareList, product]);
-      alert(`${product.name} added to compare!`);
-    } else {
-      alert('Product already in compare list!');
+  const addToCompare = async (product) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch('http://localhost:8000/api/user/compare', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ productId: product._id })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const compareItems = result.compare.map(item => ({
+            ...item.productId,
+            _id: item.productId._id
+          }));
+          setCompareList(compareItems);
+          alert(`${product.name} added to compare!`);
+        }
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to add to compare');
+      }
+    } catch (error) {
+      console.error('Error adding to compare:', error);
+      alert('Failed to add to compare');
     }
   };
 
@@ -123,8 +237,99 @@ const Home = ({ user, onLogout }) => {
     }
   };
 
-  const removeFromWishlist = (productId) => {
-    setWishlist(wishlist.filter(item => item._id !== productId));
+  const removeFromWishlist = async (productId) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch(`http://localhost:8000/api/user/wishlist/${productId}`, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const wishlistItems = result.wishlist.map(item => ({
+            ...item.productId,
+            _id: item.productId._id
+          }));
+          setWishlist(wishlistItems);
+        }
+      }
+    } catch (error) {
+      console.error('Error removing from wishlist:', error);
+    }
+  };
+
+  const updateCartQuantity = async (productId, quantity) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch(`http://localhost:8000/api/user/cart/${productId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ quantity })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const cartItems = result.cart.map(item => ({
+            ...item.productId,
+            _id: item.productId._id,
+            quantity: item.quantity
+          }));
+          setCart(cartItems);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating cart:', error);
+    }
+  };
+
+  const removeFromCart = async (productId) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch(`http://localhost:8000/api/user/cart/${productId}`, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const cartItems = result.cart.map(item => ({
+            ...item.productId,
+            _id: item.productId._id,
+            quantity: item.quantity
+          }));
+          setCart(cartItems);
+        }
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
+  };
+
+  const removeFromCompare = async (productId) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch(`http://localhost:8000/api/user/compare/${productId}`, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const compareItems = result.compare.map(item => ({
+            ...item.productId,
+            _id: item.productId._id
+          }));
+          setCompareList(compareItems);
+        }
+      }
+    } catch (error) {
+      console.error('Error removing from compare:', error);
+    }
   };
 
   const closeWishlist = () => {
@@ -278,6 +483,8 @@ const Home = ({ user, onLogout }) => {
           cart={cart}
           setCart={setCart}
           onClose={() => setShowCart(false)}
+          updateCartQuantity={updateCartQuantity}
+          removeFromCart={removeFromCart}
         />
       )}
 
@@ -288,6 +495,7 @@ const Home = ({ user, onLogout }) => {
           setCompareList={setCompareList}
           onClose={() => setShowCompare(false)}
           onAddToCart={addToCart}
+          removeFromCompare={removeFromCompare}
         />
       )}
 

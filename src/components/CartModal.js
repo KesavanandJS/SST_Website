@@ -1,21 +1,17 @@
 import React from 'react';
 import './CartModal.css';
 
-const CartModal = ({ cart, setCart, onClose }) => {
+const CartModal = ({ cart, setCart, onClose, updateCartQuantity, removeFromCart }) => {
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity === 0) {
       removeFromCart(productId);
       return;
     }
-    setCart(cart.map(item => 
-      item._id === productId 
-        ? { ...item, quantity: newQuantity }
-        : item
-    ));
+    updateCartQuantity(productId, newQuantity);
   };
 
-  const removeFromCart = (productId) => {
-    setCart(cart.filter(item => item._id !== productId));
+  const handleRemoveFromCart = (productId) => {
+    removeFromCart(productId);
   };
 
   const formatPrice = (price) => {
@@ -80,7 +76,7 @@ const CartModal = ({ cart, setCart, onClose }) => {
                       {formatPrice(item.price * item.quantity)}
                     </div>
                     <button 
-                      onClick={() => removeFromCart(item._id)}
+                      onClick={() => handleRemoveFromCart(item._id)}
                       className="remove-item-btn"
                     >
                       ×

@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = parseInt(process.env.PORT) || 8000;
 
 // Middleware
 app.use(cors());
@@ -56,6 +56,45 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  cart: [{
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  wishlist: [{
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  compare: [{
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -716,6 +755,397 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
+// ====== CART ROUTES ======
+
+// Get user's cart
+app.get('/api/user/cart', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .populate('cart.productId')
+      .select('cart');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Filter out any cart items where the product no longer exists
+    const validCartItems = user.cart.filter(item => item.productId);
+    
+    res.json({
+      success: true,
+      cart: validCartItems
+    });
+  } catch (error) {
+    console.error('Get cart error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching cart' });
+  }
+});
+
+// Add item to cart
+app.post('/api/user/cart', authenticateToken, async (req, res) => {
+  try {
+    const { productId, quantity = 1 } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // Check if item already exists in cart
+    const existingItemIndex = user.cart.findIndex(item => 
+      item.productId.toString() === productId
+    );
+
+    if (existingItemIndex > -1) {
+      // Update quantity if item exists
+      user.cart[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item to cart
+      user.cart.push({ productId, quantity });
+    }
+
+    await user.save();
+
+    // Return updated cart with populated product data
+    const updatedUser = await User.findById(userId)
+      .populate('cart.productId')
+      .select('cart');
+
+    res.json({
+      success: true,
+      message: 'Item added to cart',
+      cart: updatedUser.cart
+    });
+  } catch (error) {
+    console.error('Add to cart error:', error);
+    res.status(500).json({ success: false, message: 'Error adding to cart' });
+  }
+});
+
+// Update cart item quantity
+app.put('/api/user/cart/:productId', authenticateToken, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+    const userId = req.user.userId;
+
+    if (quantity < 1) {
+      return res.status(400).json({ success: false, message: 'Quantity must be at least 1' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const cartItemIndex = user.cart.findIndex(item => 
+      item.productId.toString() === productId
+    );
+
+    if (cartItemIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Item not found in cart' });
+    }
+
+    user.cart[cartItemIndex].quantity = quantity;
+    await user.save();
+
+    const updatedUser = await User.findById(userId)
+      .populate('cart.productId')
+      .select('cart');
+
+    res.json({
+      success: true,
+      message: 'Cart updated',
+      cart: updatedUser.cart
+    });
+  } catch (error) {
+    console.error('Update cart error:', error);
+    res.status(500).json({ success: false, message: 'Error updating cart' });
+  }
+});
+
+// Remove item from cart
+app.delete('/api/user/cart/:productId', authenticateToken, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.cart = user.cart.filter(item => 
+      item.productId.toString() !== productId
+    );
+
+    await user.save();
+
+    const updatedUser = await User.findById(userId)
+      .populate('cart.productId')
+      .select('cart');
+
+    res.json({
+      success: true,
+      message: 'Item removed from cart',
+      cart: updatedUser.cart
+    });
+  } catch (error) {
+    console.error('Remove from cart error:', error);
+    res.status(500).json({ success: false, message: 'Error removing from cart' });
+  }
+});
+
+// Clear entire cart
+app.delete('/api/user/cart', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    await User.findByIdAndUpdate(userId, { cart: [] });
+
+    res.json({
+      success: true,
+      message: 'Cart cleared',
+      cart: []
+    });
+  } catch (error) {
+    console.error('Clear cart error:', error);
+    res.status(500).json({ success: false, message: 'Error clearing cart' });
+  }
+});
+
+// ====== WISHLIST ROUTES ======
+
+// Get user's wishlist
+app.get('/api/user/wishlist', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .populate('wishlist.productId')
+      .select('wishlist');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const validWishlistItems = user.wishlist.filter(item => item.productId);
+    
+    res.json({
+      success: true,
+      wishlist: validWishlistItems
+    });
+  } catch (error) {
+    console.error('Get wishlist error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching wishlist' });
+  }
+});
+
+// Add item to wishlist
+app.post('/api/user/wishlist', authenticateToken, async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // Check if item already exists in wishlist
+    const existingItem = user.wishlist.find(item => 
+      item.productId.toString() === productId
+    );
+
+    if (existingItem) {
+      return res.status(400).json({ success: false, message: 'Item already in wishlist' });
+    }
+
+    user.wishlist.push({ productId });
+    await user.save();
+
+    const updatedUser = await User.findById(userId)
+      .populate('wishlist.productId')
+      .select('wishlist');
+
+    res.json({
+      success: true,
+      message: 'Item added to wishlist',
+      wishlist: updatedUser.wishlist
+    });
+  } catch (error) {
+    console.error('Add to wishlist error:', error);
+    res.status(500).json({ success: false, message: 'Error adding to wishlist' });
+  }
+});
+
+// Remove item from wishlist
+app.delete('/api/user/wishlist/:productId', authenticateToken, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.wishlist = user.wishlist.filter(item => 
+      item.productId.toString() !== productId
+    );
+
+    await user.save();
+
+    const updatedUser = await User.findById(userId)
+      .populate('wishlist.productId')
+      .select('wishlist');
+
+    res.json({
+      success: true,
+      message: 'Item removed from wishlist',
+      wishlist: updatedUser.wishlist
+    });
+  } catch (error) {
+    console.error('Remove from wishlist error:', error);
+    res.status(500).json({ success: false, message: 'Error removing from wishlist' });
+  }
+});
+
+// ====== COMPARE ROUTES ======
+
+// Get user's compare list
+app.get('/api/user/compare', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .populate('compare.productId')
+      .select('compare');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const validCompareItems = user.compare.filter(item => item.productId);
+    
+    res.json({
+      success: true,
+      compare: validCompareItems
+    });
+  } catch (error) {
+    console.error('Get compare error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching compare list' });
+  }
+});
+
+// Add item to compare
+app.post('/api/user/compare', authenticateToken, async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // Check if compare list is already full (max 3 items)
+    if (user.compare.length >= 3) {
+      return res.status(400).json({ success: false, message: 'Compare list is full. Maximum 3 items allowed.' });
+    }
+
+    // Check if item already exists in compare list
+    const existingItem = user.compare.find(item => 
+      item.productId.toString() === productId
+    );
+
+    if (existingItem) {
+      return res.status(400).json({ success: false, message: 'Item already in compare list' });
+    }
+
+    user.compare.push({ productId });
+    await user.save();
+
+    const updatedUser = await User.findById(userId)
+      .populate('compare.productId')
+      .select('compare');
+
+    res.json({
+      success: true,
+      message: 'Item added to compare list',
+      compare: updatedUser.compare
+    });
+  } catch (error) {
+    console.error('Add to compare error:', error);
+    res.status(500).json({ success: false, message: 'Error adding to compare list' });
+  }
+});
+
+// Remove item from compare
+app.delete('/api/user/compare/:productId', authenticateToken, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.compare = user.compare.filter(item => 
+      item.productId.toString() !== productId
+    );
+
+    await user.save();
+
+    const updatedUser = await User.findById(userId)
+      .populate('compare.productId')
+      .select('compare');
+
+    res.json({
+      success: true,
+      message: 'Item removed from compare list',
+      compare: updatedUser.compare
+    });
+  } catch (error) {
+    console.error('Remove from compare error:', error);
+    res.status(500).json({ success: false, message: 'Error removing from compare list' });
+  }
+});
+
+// Clear entire compare list
+app.delete('/api/user/compare', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    await User.findByIdAndUpdate(userId, { compare: [] });
+
+    res.json({
+      success: true,
+      message: 'Compare list cleared',
+      compare: []
+    });
+  } catch (error) {
+    console.error('Clear compare error:', error);
+    res.status(500).json({ success: false, message: 'Error clearing compare list' });
+  }
+});
+
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
@@ -723,8 +1153,17 @@ const server = app.listen(PORT, () => {
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.log(`Port ${PORT} is busy, trying port ${PORT + 1}`);
-    server.listen(PORT + 1, () => {
+    const fallbackServer = app.listen(PORT + 1, () => {
       console.log(`Server running on port ${PORT + 1}`);
+    });
+    
+    fallbackServer.on('error', (fallbackErr) => {
+      if (fallbackErr.code === 'EADDRINUSE') {
+        console.log(`Port ${PORT + 1} is also busy, trying port ${PORT + 2}`);
+        app.listen(PORT + 2, () => {
+          console.log(`Server running on port ${PORT + 2}`);
+        });
+      }
     });
   } else {
     console.error('Server error:', err);

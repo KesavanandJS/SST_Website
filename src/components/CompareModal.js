@@ -1,13 +1,28 @@
 import React from 'react';
 import './CompareModal.css';
 
-const CompareModal = ({ compareList, setCompareList, onClose, onAddToCart }) => {
-  const removeFromCompare = (productId) => {
-    setCompareList(compareList.filter(item => item._id !== productId));
+const CompareModal = ({ compareList, setCompareList, onClose, onAddToCart, removeFromCompare }) => {
+  const removeFromCompareHandler = (productId) => {
+    removeFromCompare(productId);
   };
 
-  const clearCompare = () => {
-    setCompareList([]);
+  const clearCompare = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/user/compare', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setCompareList([]);
+      }
+    } catch (error) {
+      console.error('Error clearing compare list:', error);
+    }
   };
 
   const formatPrice = (price) => {
@@ -52,7 +67,7 @@ const CompareModal = ({ compareList, setCompareList, onClose, onAddToCart }) => 
                   {compareList.map(product => (
                     <div key={product._id} className="compare-cell product-cell">
                       <button 
-                        onClick={() => removeFromCompare(product._id)}
+                        onClick={() => removeFromCompareHandler(product._id)}
                         className="remove-compare-btn"
                       >
                         ×
