@@ -5,7 +5,17 @@ import FiltersModal from './FiltersModal';
 import CartModal from './CartModal';
 import CompareModal from './CompareModal';
 import AdminDashboard from './AdminDashboard';
+import AdvancedSearch from './AdvancedSearch';
+import ProductRecommendations from './ProductRecommendations';
+import ThemeToggle from './ThemeToggle';
+import QuickChatSupport from './QuickChatSupport';
+import { useToast } from '../context/ToastContext';
 import './Home.css';
+import './ToastNotification.css';
+import './ThemeToggle.css';
+import './AdvancedSearch.css';
+import './ProductRecommendations.css';
+import './QuickChatSupport.css';
 
 const Home = ({ user, onLogout }) => {
   const [products, setProducts] = useState([]);
@@ -19,12 +29,15 @@ const Home = ({ user, onLogout }) => {
   const [showCompare, setShowCompare] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [autoRefreshCart, setAutoRefreshCart] = useState(true);
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
     brand: '',
     rating: ''
   });
+
+  const { success, error, info } = useToast();
 
   const categories = ['All', 'Tapes', 'Wicks', 'Cotton Wicks', 'Fabric Tapes', 'Binding Tapes', 'Elastic Tapes', 'Twill Tapes', 'Herringbone Tapes'];
 
@@ -37,6 +50,19 @@ const Home = ({ user, onLogout }) => {
       loadUserData();
     }
   }, [user]);
+
+  // Auto-refresh cart every 30 seconds if enabled
+  useEffect(() => {
+    let interval;
+    if (autoRefreshCart && user) {
+      interval = setInterval(() => {
+        loadUserData();
+      }, 30000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoRefreshCart, user]);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -51,7 +77,7 @@ const Home = ({ user, onLogout }) => {
       const headers = getAuthHeaders();
       
       // Load cart
-      const cartResponse = await fetch('http://localhost:8000/api/user/cart', { headers });
+      const cartResponse = await fetch('http://localhost:8001/api/user/cart', { headers });
       if (cartResponse.ok) {
         const cartResult = await cartResponse.json();
         if (cartResult.success) {
@@ -65,7 +91,7 @@ const Home = ({ user, onLogout }) => {
       }
 
       // Load wishlist
-      const wishlistResponse = await fetch('http://localhost:8000/api/user/wishlist', { headers });
+      const wishlistResponse = await fetch('http://localhost:8001/api/user/wishlist', { headers });
       if (wishlistResponse.ok) {
         const wishlistResult = await wishlistResponse.json();
         if (wishlistResult.success) {
@@ -78,7 +104,7 @@ const Home = ({ user, onLogout }) => {
       }
 
       // Load compare list
-      const compareResponse = await fetch('http://localhost:8000/api/user/compare', { headers });
+      const compareResponse = await fetch('http://localhost:8001/api/user/compare', { headers });
       if (compareResponse.ok) {
         const compareResult = await compareResponse.json();
         if (compareResult.success) {
@@ -104,7 +130,7 @@ const Home = ({ user, onLogout }) => {
       if (filters.inStock) params.append('inStock', 'true');
       if (searchTerm) params.append('search', searchTerm);
 
-      const response = await fetch(`http://localhost:8000/api/products?${params}`);
+      const response = await fetch(`http://localhost:8001/api/products?${params}`);
       const result = await response.json();
       if (result.success) {
         // Ensure each product has required fields
@@ -140,7 +166,7 @@ const Home = ({ user, onLogout }) => {
   const addToCart = async (product) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch('http://localhost:8000/api/user/cart', {
+      const response = await fetch('http://localhost:8001/api/user/cart', {
         method: 'POST',
         headers,
         body: JSON.stringify({ productId: product._id, quantity: 1 })
@@ -155,22 +181,22 @@ const Home = ({ user, onLogout }) => {
             quantity: item.quantity
           }));
           setCart(cartItems);
-          alert(`${product.name} added to cart!`);
+          success('Product added to cart!', `${product.name} added successfully`);
         }
       } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to add to cart');
+        const errorData = await response.json();
+        error('Failed to add to cart', errorData.message || 'Something went wrong');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Failed to add to cart');
+      error('Network error', 'Failed to add to cart. Please try again.');
     }
   };
 
   const addToWishlist = async (product) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch('http://localhost:8000/api/user/wishlist', {
+      const response = await fetch('http://localhost:8001/api/user/wishlist', {
         method: 'POST',
         headers,
         body: JSON.stringify({ productId: product._id })
@@ -184,22 +210,22 @@ const Home = ({ user, onLogout }) => {
             _id: item.productId._id
           }));
           setWishlist(wishlistItems);
-          alert(`${product.name} added to wishlist!`);
+          success('Added to wishlist!', `${product.name} added to your wishlist`);
         }
       } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to add to wishlist');
+        const errorData = await response.json();
+        error('Failed to add to wishlist', errorData.message || 'Something went wrong');
       }
     } catch (error) {
       console.error('Error adding to wishlist:', error);
-      alert('Failed to add to wishlist');
+      error('Network error', 'Failed to add to wishlist. Please try again.');
     }
   };
 
   const addToCompare = async (product) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch('http://localhost:8000/api/user/compare', {
+      const response = await fetch('http://localhost:8001/api/user/compare', {
         method: 'POST',
         headers,
         body: JSON.stringify({ productId: product._id })
@@ -213,21 +239,21 @@ const Home = ({ user, onLogout }) => {
             _id: item.productId._id
           }));
           setCompareList(compareItems);
-          alert(`${product.name} added to compare!`);
+          success('Added to compare!', `${product.name} added to compare list`);
         }
       } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to add to compare');
+        const errorData = await response.json();
+        error('Failed to add to compare', errorData.message || 'Something went wrong');
       }
     } catch (error) {
       console.error('Error adding to compare:', error);
-      alert('Failed to add to compare');
+      error('Network error', 'Failed to add to compare. Please try again.');
     }
   };
 
   const viewProductDetails = async (productId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/products/${productId}`);
+      const response = await fetch(`http://localhost:8001/api/products/${productId}`);
       const result = await response.json();
       if (result.success) {
         setSelectedProduct(result.product);
@@ -240,7 +266,7 @@ const Home = ({ user, onLogout }) => {
   const removeFromWishlist = async (productId) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8000/api/user/wishlist/${productId}`, {
+      const response = await fetch(`http://localhost:8001/api/user/wishlist/${productId}`, {
         method: 'DELETE',
         headers
       });
@@ -263,7 +289,7 @@ const Home = ({ user, onLogout }) => {
   const updateCartQuantity = async (productId, quantity) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8000/api/user/cart/${productId}`, {
+      const response = await fetch(`http://localhost:8001/api/user/cart/${productId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ quantity })
@@ -288,7 +314,7 @@ const Home = ({ user, onLogout }) => {
   const removeFromCart = async (productId) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8000/api/user/cart/${productId}`, {
+      const response = await fetch(`http://localhost:8001/api/user/cart/${productId}`, {
         method: 'DELETE',
         headers
       });
@@ -312,7 +338,7 @@ const Home = ({ user, onLogout }) => {
   const removeFromCompare = async (productId) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8000/api/user/compare/${productId}`, {
+      const response = await fetch(`http://localhost:8001/api/user/compare/${productId}`, {
         method: 'DELETE',
         headers
       });
@@ -344,16 +370,6 @@ const Home = ({ user, onLogout }) => {
       maximumFractionDigits: 0
     }).format(price);
   };
-
-  // Check if user exists and has admin role
-  if (user?.role === 'admin') {
-    return <AdminDashboard admin={user} onLogout={onLogout} />;
-  }
-
-  // If user doesn't exist, return null or redirect to login
-  if (!user) {
-    return null;
-  }
 
   return (
     <div className="home-container">
@@ -389,6 +405,18 @@ const Home = ({ user, onLogout }) => {
       </header>
 
       <main className="main-content">
+        {/* Advanced Search Component */}
+        <div className="search-enhancement">
+          <AdvancedSearch 
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            products={products}
+          />
+        </div>
+
         <aside className="sidebar">
           <h3>Categories</h3>
           <ul className="category-list">
@@ -402,6 +430,11 @@ const Home = ({ user, onLogout }) => {
               </li>
             ))}
           </ul>
+          
+          {/* Theme Toggle in Sidebar */}
+          <div className="sidebar-controls">
+            <ThemeToggle />
+          </div>
         </aside>
 
         <section className="products-section">
@@ -472,6 +505,14 @@ const Home = ({ user, onLogout }) => {
               </div>
             ))}
           </div>
+          
+          {/* Product Recommendations */}
+          <ProductRecommendations 
+            currentProducts={filteredProducts}
+            user={user}
+            onAddToCart={addToCart}
+            onAddToWishlist={addToWishlist}
+          />
         </section>
       </main>
 
@@ -565,6 +606,9 @@ const Home = ({ user, onLogout }) => {
           </div>
         </div>
       )}
+      
+      {/* Quick Chat Support */}
+      <QuickChatSupport />
     </div>
   );
 };

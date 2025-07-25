@@ -42,7 +42,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/products');
+      const response = await fetch('http://localhost:8001/api/products');
       const result = await response.json();
       if (result.success) {
         setProducts(result.products);
@@ -123,7 +123,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8000/api/admin/products', {
+      const response = await fetch('http://localhost:8001/api/admin/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

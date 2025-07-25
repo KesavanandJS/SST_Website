@@ -69,19 +69,12 @@ const Signup = ({ switchToLogin }) => {
       setIsLoading(true);
       
       try {
-        const response = await fetch('http://localhost:8000/api/signup', {
+        const response = await fetch('http://localhost:8001/api/signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            username: formData.username,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-            role: formData.role // Include role in the request
-          })
+          body: JSON.stringify(formData)
         });
 
         const result = await response.json();

@@ -4,10 +4,11 @@ import Signup from './components/Signup';
 import Home from './components/Home';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
+import About from './components/About';
 import './App.css';
 
 function App() {
-  const [currentView, setCurrentView] = useState('login');
+  const [currentView, setCurrentView] = useState('about');
   const [user, setUser] = useState(null);
   const [admin, setAdmin] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,6 +35,8 @@ function App() {
   const switchToLogin = () => setCurrentView('login');
   const switchToAdminLogin = () => setCurrentView('adminLogin');
   const switchToUserLogin = () => setCurrentView('login');
+  const switchToAbout = () => setCurrentView('about');
+  const handleViewProducts = () => setCurrentView('login');
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -45,7 +48,7 @@ function App() {
     localStorage.removeItem('user');
     setUser(null);
     setIsAuthenticated(false);
-    setCurrentView('login');
+    setCurrentView('about');
   };
 
   const handleAdminLogin = (adminData) => {
@@ -58,7 +61,7 @@ function App() {
     localStorage.removeItem('admin');
     setAdmin(null);
     setIsAdminAuthenticated(false);
-    setCurrentView('login');
+    setCurrentView('about');
   };
 
   // Admin view
@@ -73,6 +76,9 @@ function App() {
 
   return (
     <div className="App">
+      {currentView === 'about' && (
+        <About onViewProducts={handleViewProducts} />
+      )}
       {currentView === 'login' && (
         <>
           <Login switchToSignup={switchToSignup} onLogin={handleLogin} />
@@ -80,14 +86,32 @@ function App() {
             <button onClick={switchToAdminLogin} className="link-button">
               Admin Login
             </button>
+            <span style={{ margin: '0 10px', color: '#ccc' }}>|</span>
+            <button onClick={switchToAbout} className="link-button">
+              ← Back to About
+            </button>
           </div>
         </>
       )}
       {currentView === 'signup' && (
-        <Signup switchToLogin={switchToLogin} />
+        <>
+          <Signup switchToLogin={switchToLogin} />
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button onClick={switchToAbout} className="link-button">
+              ← Back to About
+            </button>
+          </div>
+        </>
       )}
       {currentView === 'adminLogin' && (
-        <AdminLogin onAdminLogin={handleAdminLogin} switchToUserLogin={switchToUserLogin} />
+        <>
+          <AdminLogin onAdminLogin={handleAdminLogin} switchToUserLogin={switchToUserLogin} />
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button onClick={switchToAbout} className="link-button">
+              ← Back to About
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

@@ -18,12 +18,17 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/SST';
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 30000, // 30 seconds timeout
+  socketTimeoutMS: 45000, // 45 seconds socket timeout
 })
 .then(() => {
   console.log('✅ MongoDB SST database connected successfully');
   console.log(`📍 Connected to: ${MONGODB_URI.includes('localhost') ? 'Local MongoDB' : 'MongoDB Atlas (Cloud)'}`);
 })
-.catch((err) => console.error('❌ MongoDB connection error:', err));
+.catch((err) => {
+  console.error('❌ MongoDB connection error:', err);
+  console.log('💡 Tip: Check your internet connection and MongoDB Atlas whitelist settings');
+});
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -1537,8 +1542,15 @@ async function initializeDatabase() {
 const server = app.listen(PORT, async () => {
   console.log(`🚀 Sri Saravana Textile Server running on port ${PORT}`);
   
-  // Initialize database with sample data
-  await initializeDatabase();
+  // Wait for MongoDB connection before initializing database
+  try {
+    await mongoose.connection.asPromise();
+    console.log('📡 Database connection established, initializing...');
+    await initializeDatabase();
+  } catch (error) {
+    console.error('❌ Failed to establish database connection:', error);
+    console.log('⚠️  Server running without database initialization');
+  }
 });
 
 server.on('error', (err) => {
@@ -1547,8 +1559,15 @@ server.on('error', (err) => {
     const fallbackServer = app.listen(PORT + 1, async () => {
       console.log(`🚀 Sri Saravana Textile Server running on port ${PORT + 1}`);
       
-      // Initialize database with sample data
-      await initializeDatabase();
+      // Wait for MongoDB connection before initializing database
+      try {
+        await mongoose.connection.asPromise();
+        console.log('📡 Database connection established, initializing...');
+        await initializeDatabase();
+      } catch (error) {
+        console.error('❌ Failed to establish database connection:', error);
+        console.log('⚠️  Server running without database initialization');
+      }
     });
     
     fallbackServer.on('error', (fallbackErr) => {
@@ -1557,8 +1576,15 @@ server.on('error', (err) => {
         app.listen(PORT + 2, async () => {
           console.log(`🚀 Sri Saravana Textile Server running on port ${PORT + 2}`);
           
-          // Initialize database with sample data
-          await initializeDatabase();
+          // Wait for MongoDB connection before initializing database
+          try {
+            await mongoose.connection.asPromise();
+            console.log('📡 Database connection established, initializing...');
+            await initializeDatabase();
+          } catch (error) {
+            console.error('❌ Failed to establish database connection:', error);
+            console.log('⚠️  Server running without database initialization');
+          }
         });
       }
     });
