@@ -9,7 +9,7 @@ const Signup = ({ switchToLogin }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user' // Add role field
+    role: 'user' // Always set to 'user' - admin account is separate
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -106,25 +106,12 @@ const Signup = ({ switchToLogin }) => {
   return (
     <div className="auth-container">
       <div className="auth-form signup-form">
-        <h2>Sign Up</h2>
+        <h2>🧵 Create Customer Account</h2>
+        <p style={{ textAlign: 'center', color: '#666', marginBottom: '20px' }}>
+          Join Sri Saravana Textile to browse and purchase premium tapes & wicks
+        </p>
         <form onSubmit={handleSubmit}>
           {errors.general && <div className="error-message general-error">{errors.general}</div>}
-          
-          <div className="form-group">
-            <label htmlFor="role">Account Type</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className={errors.role ? 'error' : ''}
-              disabled={isLoading}
-            >
-              <option value="user">User Account</option>
-              <option value="admin">Admin Account</option>
-            </select>
-            {errors.role && <span className="error-message">{errors.role}</span>}
-          </div>
           
           <div className="form-group">
             <label htmlFor="username">Username</label>

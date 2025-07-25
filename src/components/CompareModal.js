@@ -34,7 +34,7 @@ const CompareModal = ({ compareList, setCompareList, onClose, onAddToCart, remov
     }).format(price);
   };
 
-  const specifications = ['processor', 'ram', 'storage', 'display', 'battery', 'camera', 'os'];
+  const specifications = ['material', 'size', 'color', 'pattern', 'sleeve', 'neckline', 'length'];
 
   return (
     <div className="modal-overlay" onClick={onClose}>

@@ -7,7 +7,7 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const coupons = {
-    'ELECTRONICS10': { discount: 10, minAmount: 8000 },
+    'FASHION10': { discount: 10, minAmount: 8000 },
     'NEWUSER15': { discount: 15, minAmount: 16000 },
     'SAVE20': { discount: 20, minAmount: 40000 }
   };
@@ -128,7 +128,7 @@ const Cart = ({ isOpen, onClose, cartItems, updateCartItems, user }) => {
                     <img src={item.image} alt={item.name} className="cart-item-image" />
                     <div className="cart-item-details">
                       <h4>{item.name}</h4>
-                      <p className="cart-item-specs">{item.specs?.processor || item.category}</p>
+                      <p className="cart-item-specs">{item.specs?.material || item.category}</p>
                       <div className="quantity-controls">
                         <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</button>
                         <span>{item.quantity}</span>

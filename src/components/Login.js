@@ -67,7 +67,10 @@ const Login = ({ switchToSignup, onLogin }) => {
   return (
     <div className="auth-container">
       <div className="auth-form">
-        <h2>Login</h2>
+        <h2>🧵 Customer Login</h2>
+        <p style={{ textAlign: 'center', color: '#666', marginBottom: '20px' }}>
+          Welcome back to Sri Saravana Textile
+        </p>
         <form onSubmit={handleSubmit}>
           {errors.general && <div className="error-message general-error">{errors.general}</div>}
           

@@ -67,7 +67,7 @@ const AdminLogin = ({ onAdminLogin, switchToUserLogin }) => {
   return (
     <div className="auth-container">
       <div className="auth-form">
-        <h2>🔐 Admin Login</h2>
+        <h2>🏪 Sri Saravana Textile - Admin Login</h2>
         <form onSubmit={handleSubmit}>
           {errors.general && <div className="error-message general-error">{errors.general}</div>}
           
@@ -105,6 +105,11 @@ const AdminLogin = ({ onAdminLogin, switchToUserLogin }) => {
             {isLoading ? 'Signing in...' : '🚀 Login as Admin'}
           </button>
         </form>
+        
+        <div className="admin-info">
+          <p><strong>🧵 Textile Management System</strong></p>
+          <p>Only authorized personnel can access the admin panel</p>
+        </div>
         
         <p className="auth-switch">
           Not an admin? 

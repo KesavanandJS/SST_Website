@@ -12,13 +12,18 @@ const PORT = parseInt(process.env.PORT) || 8000;
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect('mongodb://localhost:27017/placements', {
+// MongoDB Connection (supports both local and cloud)
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/SST';
+
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected successfully'))
-.catch((err) => console.error('MongoDB connection error:', err));
+.then(() => {
+  console.log('✅ MongoDB SST database connected successfully');
+  console.log(`📍 Connected to: ${MONGODB_URI.includes('localhost') ? 'Local MongoDB' : 'MongoDB Atlas (Cloud)'}`);
+})
+.catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -101,7 +106,7 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Enhanced Product Schema
+// Enhanced Product Schema for Tapes and Wicks
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -111,7 +116,8 @@ const productSchema = new mongoose.Schema({
   brand: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    default: 'Sri Saravana Textile'
   },
   price: {
     type: Number,
@@ -130,7 +136,7 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Smartphones', 'Laptops', 'Audio', 'Tablets', 'Gaming', 'Accessories', 'Smart Watches', 'Cameras']
+    enum: ['Tapes', 'Wicks', 'Cotton Wicks', 'Fabric Tapes', 'Binding Tapes', 'Elastic Tapes', 'Twill Tapes', 'Herringbone Tapes']
   },
   description: {
     type: String,
@@ -138,24 +144,35 @@ const productSchema = new mongoose.Schema({
     trim: true
   },
   specifications: {
-    processor: String,
-    ram: String,
-    storage: String,
-    display: String,
-    battery: String,
-    camera: String,
-    os: String,
-    connectivity: String,
-    dimensions: String,
-    weight: String,
-    warranty: String,
-    color: String
+    material: String, // Cotton, Polyester, Nylon, etc.
+    width: String, // Width in mm or inches
+    thickness: String, // Thickness in mm
+    color: String,
+    pattern: String,
+    length: String, // Length available per kg
+    weight: String, // Weight per meter
+    tensileStrength: String,
+    washable: String,
+    shrinkage: String,
+    origin: String,
+    gsm: String, // Grams per square meter
+    weave: String // Plain, Twill, etc.
   },
   features: [String],
   stock: {
     type: Number,
     default: 0,
     min: 0
+  },
+  unit: {
+    type: String,
+    default: 'Kg',
+    enum: ['Kg', 'Meters', 'Pieces']
+  },
+  minimumOrder: {
+    type: Number,
+    default: 1,
+    min: 1
   },
   rating: {
     type: Number,
@@ -283,7 +300,10 @@ const requireAdmin = async (req, res, next) => {
 // User Signup Route
 app.post('/api/signup', async (req, res) => {
   try {
-    const { username, firstName, lastName, email, password, role = 'user' } = req.body;
+    const { username, firstName, lastName, email, password } = req.body;
+    
+    // Force role to be 'user' only - admin accounts are created separately
+    const role = 'user';
 
     const existingUser = await User.findOne({
       $or: [{ email }, { username }]
@@ -1146,22 +1166,399 @@ app.delete('/api/user/compare', authenticateToken, async (req, res) => {
   }
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Sample textile products data for initial setup
+const sampleTextileProducts = [
+  {
+    name: "Cotton Binding Tape 25mm - White",
+    brand: "Sri Saravana Textile",
+    price: 180,
+    originalPrice: 220,
+    category: "Binding Tapes",
+    description: "Premium quality cotton binding tape suitable for garment finishing, bag making, and craft projects. Soft texture with excellent durability.",
+    specifications: {
+      material: "100% Cotton",
+      width: "25mm",
+      thickness: "1.2mm",
+      color: "White",
+      pattern: "Plain",
+      length: "500 meters per kg",
+      weight: "2 grams per meter",
+      tensileStrength: "150 N",
+      washable: "Yes",
+      shrinkage: "2-3%",
+      gsm: "200",
+      weave: "Plain",
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "High tensile strength for durability",
+      "Colorfast - won't bleed or fade",
+      "Machine washable and dry cleanable", 
+      "Soft texture for comfortable wear",
+      "Eco-friendly cotton material",
+      "Pre-shrunk to minimize further shrinkage"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1586281010691-3d33ac5e7f4c?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1559532173-d402e50b5fac?w=400&h=400&fit=crop"
+    ],
+    stock: 45,
+    unit: "Kg",
+    minimumOrder: 1,
+    rating: 4.7
+  },
+  {
+    name: "Cotton Wicks Round 3mm - Natural",
+    brand: "Sri Saravana Textile", 
+    price: 320,
+    originalPrice: 380,
+    category: "Cotton Wicks",
+    description: "Pure cotton wicks for oil lamps, diyas, and spiritual purposes. Made from finest cotton fibers for consistent burning.",
+    specifications: {
+      material: "100% Pure Cotton",
+      width: "3mm",
+      thickness: "3mm", 
+      color: "Natural White",
+      pattern: "Round Braided",
+      length: "2000 meters per kg",
+      weight: "0.5 grams per meter",
+      tensileStrength: "80 N",
+      washable: "No",
+      shrinkage: "Minimal",
+      gsm: "50",
+      weave: "Braided",
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "Pure cotton for clean burning",
+      "Consistent flame without smoke",
+      "Long burning duration",
+      "Spiritual and decorative use",
+      "Eco-friendly and biodegradable",
+      "Traditional hand-braided quality"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1551845041-63ad1e87d46d?w=400&h=400&fit=crop"
+    ],
+    stock: 28,
+    unit: "Kg", 
+    minimumOrder: 2,
+    rating: 4.9
+  },
+  {
+    name: "Elastic Tape 12mm - Black",
+    brand: "Sri Saravana Textile",
+    price: 240,
+    originalPrice: 280,
+    category: "Elastic Tapes",
+    description: "High-quality elastic tape perfect for waistbands, cuffs, and stretchable garment applications. Excellent stretch recovery.",
+    specifications: {
+      material: "Cotton Polyester Blend with Rubber Core",
+      width: "12mm",
+      thickness: "2mm",
+      color: "Black",
+      pattern: "Plain",
+      length: "800 meters per kg", 
+      weight: "1.25 grams per meter",
+      tensileStrength: "200 N",
+      washable: "Yes",
+      shrinkage: "1-2%",
+      gsm: "125",
+      weave: "Knitted", 
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "Superior stretch and recovery",
+      "Heat resistant up to 60°C",
+      "Chlorine resistant for swimwear",
+      "Latex-free and skin-friendly", 
+      "Colorfast dye technology",
+      "Pre-tested for durability"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop"
+    ],
+    stock: 52,
+    unit: "Kg",
+    minimumOrder: 1,
+    rating: 4.6
+  },
+  {
+    name: "Twill Tape 20mm - Khaki",
+    brand: "Sri Saravana Textile",
+    price: 195,
+    originalPrice: 235,
+    category: "Twill Tapes",
+    description: "Strong twill weave tape ideal for reinforcement, straps, and heavy-duty applications. Military-grade quality.",
+    specifications: {
+      material: "100% Cotton Twill",
+      width: "20mm", 
+      thickness: "1.5mm",
+      color: "Khaki",
+      pattern: "Diagonal Twill",
+      length: "600 meters per kg",
+      weight: "1.67 grams per meter",
+      tensileStrength: "300 N",
+      washable: "Yes",
+      shrinkage: "2%",
+      gsm: "167",
+      weave: "Twill",
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "Military-grade strength and durability",
+      "Diagonal weave for extra strength",
+      "Fade-resistant natural dyes",
+      "Suitable for outdoor applications",
+      "Machine washable up to 90°C",
+      "Fraying resistant edges"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1582735689369-4fe89db0853c?w=400&h=400&fit=crop", 
+      "https://images.unsplash.com/photo-1566479179817-78fc5a4b2b4f?w=400&h=400&fit=crop"
+    ],
+    stock: 38,
+    unit: "Kg",
+    minimumOrder: 1,
+    rating: 4.8
+  },
+  {
+    name: "Herringbone Tape 15mm - Navy Blue",
+    brand: "Sri Saravana Textile",
+    price: 210,
+    originalPrice: 250,
+    category: "Herringbone Tapes",
+    description: "Premium herringbone pattern tape for decorative and functional applications. Classic design with modern durability.",
+    specifications: {
+      material: "Cotton Polyester Blend",
+      width: "15mm",
+      thickness: "1.3mm", 
+      color: "Navy Blue",
+      pattern: "Herringbone",
+      length: "700 meters per kg",
+      weight: "1.43 grams per meter",
+      tensileStrength: "180 N",
+      washable: "Yes",
+      shrinkage: "1.5%",
+      gsm: "143",
+      weave: "Herringbone",
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "Classic herringbone pattern",
+      "Decorative and functional",
+      "Colorfast premium dyes",
+      "Smooth finish for comfort",
+      "Versatile for multiple uses", 
+      "Professional appearance"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1558618047-61c5f888334d?w=400&h=400&fit=crop"
+    ],
+    stock: 35,
+    unit: "Kg",
+    minimumOrder: 2,
+    rating: 4.7
+  },
+  {
+    name: "Fabric Tape 30mm - Red",
+    brand: "Sri Saravana Textile",
+    price: 165,
+    originalPrice: 200,
+    category: "Fabric Tapes", 
+    description: "Versatile fabric tape suitable for binding, trimming, and decorative purposes. Vibrant red color for eye-catching applications.",
+    specifications: {
+      material: "100% Cotton Fabric",
+      width: "30mm",
+      thickness: "1mm",
+      color: "Red", 
+      pattern: "Plain",
+      length: "450 meters per kg",
+      weight: "2.22 grams per meter",
+      tensileStrength: "120 N",
+      washable: "Yes",
+      shrinkage: "3%",
+      gsm: "222",
+      weave: "Plain",
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "Vibrant colorfast dyes",
+      "Soft fabric texture",
+      "Easy to work with",
+      "Multiple decorative uses",
+      "Iron-friendly material",
+      "Budget-friendly option"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1517707209946-5ff15023c749?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop"
+    ],
+    stock: 42,
+    unit: "Kg",
+    minimumOrder: 1,
+    rating: 4.5
+  },
+  {
+    name: "Cotton Wicks Flat 5mm - Natural",
+    brand: "Sri Saravana Textile",
+    price: 280,
+    originalPrice: 330,
+    category: "Cotton Wicks",
+    description: "Premium flat cotton wicks for oil lamps and traditional lighting. Provides steady, smokeless flame.",
+    specifications: {
+      material: "100% Pure Cotton",
+      width: "5mm",
+      thickness: "1mm",
+      color: "Natural White",
+      pattern: "Flat Woven",
+      length: "1500 meters per kg",
+      weight: "0.67 grams per meter", 
+      tensileStrength: "60 N",
+      washable: "No",
+      shrinkage: "Minimal",
+      gsm: "67",
+      weave: "Plain",
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "Traditional flat wick design",
+      "Clean burning without smoke", 
+      "Long-lasting flame",
+      "Pure cotton for spiritual use",
+      "Handcrafted quality",
+      "Eco-friendly material"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1551845041-63ad1e87d46d?w=400&h=400&fit=crop"
+    ],
+    stock: 31,
+    unit: "Kg",
+    minimumOrder: 2,
+    rating: 4.8
+  },
+  {
+    name: "Elastic Tape 20mm - White",
+    brand: "Sri Saravana Textile",
+    price: 285,
+    originalPrice: 340,
+    category: "Elastic Tapes",
+    description: "Wide elastic tape perfect for waistbands and wide applications. Superior stretch and recovery properties.",
+    specifications: {
+      material: "Cotton Spandex Blend",
+      width: "20mm",
+      thickness: "2.5mm",
+      color: "White",
+      pattern: "Plain",
+      length: "600 meters per kg",
+      weight: "1.67 grams per meter",
+      tensileStrength: "250 N",
+      washable: "Yes",
+      shrinkage: "1%",
+      gsm: "167",
+      weave: "Knitted",
+      origin: "Tamil Nadu, India"
+    },
+    features: [
+      "Extra wide for waistbands",
+      "Premium stretch recovery",
+      "Comfortable against skin",
+      "Heat and chemical resistant",
+      "Professional grade quality",
+      "Long-lasting elasticity"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop"
+    ],
+    stock: 29,
+    unit: "Kg",
+    minimumOrder: 1,
+    rating: 4.9
+  }
+];
+
+// Database initialization function
+async function initializeDatabase() {
+  try {
+    console.log('\n🔄 Initializing SST Database...');
+    
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ username: 'sst_admin' });
+    
+    if (!existingAdmin) {
+      // Create admin user
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash('SST@2025', saltRounds);
+
+      const admin = new Admin({
+        username: 'sst_admin',
+        password: hashedPassword,
+        role: 'admin',
+        shopName: 'Sri Saravana Textile'
+      });
+
+      await admin.save();
+      console.log('✅ Admin created successfully!');
+      console.log('Admin Username: sst_admin');
+      console.log('Admin Password: SST@2025');
+    } else {
+      console.log('📋 Admin already exists');
+    }
+
+    // Check if products already exist
+    const existingProducts = await Product.countDocuments();
+    
+    if (existingProducts === 0) {
+      // Insert sample products
+      await Product.insertMany(sampleTextileProducts);
+      console.log(`✅ ${sampleTextileProducts.length} textile products added successfully!`);
+    } else {
+      console.log(`📦 Database already has ${existingProducts} products`);
+    }
+    
+    console.log('\n🎉 Database initialization completed!');
+    console.log('📝 Summary:');
+    console.log(`• Database: SST (MongoDB)`);
+    console.log(`• Admin User: sst_admin / SST@2025`);
+    console.log(`• Total Products: ${await Product.countDocuments()}`);
+    console.log(`• Categories: Tapes, Wicks, Cotton Wicks, Fabric Tapes, Binding Tapes, Elastic Tapes, Twill Tapes, Herringbone Tapes`);
+    
+  } catch (error) {
+    console.error('❌ Error initializing database:', error);
+  }
+}
+
+// Start server with automatic database setup
+const server = app.listen(PORT, async () => {
+  console.log(`🚀 Sri Saravana Textile Server running on port ${PORT}`);
+  
+  // Initialize database with sample data
+  await initializeDatabase();
 });
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.log(`Port ${PORT} is busy, trying port ${PORT + 1}`);
-    const fallbackServer = app.listen(PORT + 1, () => {
-      console.log(`Server running on port ${PORT + 1}`);
+    const fallbackServer = app.listen(PORT + 1, async () => {
+      console.log(`🚀 Sri Saravana Textile Server running on port ${PORT + 1}`);
+      
+      // Initialize database with sample data
+      await initializeDatabase();
     });
     
     fallbackServer.on('error', (fallbackErr) => {
       if (fallbackErr.code === 'EADDRINUSE') {
         console.log(`Port ${PORT + 1} is also busy, trying port ${PORT + 2}`);
-        app.listen(PORT + 2, () => {
-          console.log(`Server running on port ${PORT + 2}`);
+        app.listen(PORT + 2, async () => {
+          console.log(`🚀 Sri Saravana Textile Server running on port ${PORT + 2}`);
+          
+          // Initialize database with sample data
+          await initializeDatabase();
         });
       }
     });

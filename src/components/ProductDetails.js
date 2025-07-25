@@ -128,8 +128,8 @@ const ProductDetails = ({ product, onClose, addToCart, addToWishlist, comparePro
               <div className="feature">
                 <span className="icon">🛡️</span>
                 <div>
-                  <strong>2-Year Warranty</strong>
-                  <p>Manufacturer warranty</p>
+                  <strong>Quality Assurance</strong>
+                  <p>Premium quality guaranteed</p>
                 </div>
               </div>
             </div>

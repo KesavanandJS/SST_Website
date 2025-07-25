@@ -26,7 +26,7 @@ const Home = ({ user, onLogout }) => {
     rating: ''
   });
 
-  const categories = ['All', 'Smartphones', 'Laptops', 'Audio', 'Tablets', 'Gaming', 'Accessories', 'Smart Watches', 'Cameras'];
+  const categories = ['All', 'Tapes', 'Wicks', 'Cotton Wicks', 'Fabric Tapes', 'Binding Tapes', 'Elastic Tapes', 'Twill Tapes', 'Herringbone Tapes'];
 
   useEffect(() => {
     fetchProducts();
@@ -359,11 +359,11 @@ const Home = ({ user, onLogout }) => {
     <div className="home-container">
       <header className="header">
         <div className="header-content">
-          <h1 className="logo">ElectroStore</h1>
+          <h1 className="logo">🧵 Sri Saravana Textile</h1>
           <div className="search-bar">
             <input
               type="text"
-              placeholder="Search products, brands..."
+              placeholder="Search tapes, wicks, brands..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -372,16 +372,16 @@ const Home = ({ user, onLogout }) => {
           <div className="user-info">
             <span>Welcome, {user.firstName}!</span>
             <button onClick={() => setShowFilters(true)} className="filter-btn">
-              Filters
+              🔍 Filters
             </button>
             <button onClick={() => setShowWishlist(true)} className="wishlist-btn">
-              Wishlist ({wishlist.length})
+              ♡ Wishlist ({wishlist.length})
             </button>
             <button onClick={() => setShowCart(true)} className="cart-btn">
-              Cart ({cart.reduce((sum, item) => sum + item.quantity, 0)})
+              🛒 Cart ({cart.reduce((sum, item) => sum + item.quantity, 0)})
             </button>
             <button onClick={() => setShowCompare(true)} className="compare-btn">
-              Compare ({compareList.length})
+              ⚖ Compare ({compareList.length})
             </button>
             <button onClick={onLogout} className="logout-btn">Logout</button>
           </div>
@@ -405,13 +405,13 @@ const Home = ({ user, onLogout }) => {
         </aside>
 
         <section className="products-section">
-          <h2>Featured Products ({filteredProducts.length})</h2>
+          <h2>🧵 Tapes & Wicks Collection ({filteredProducts.length})</h2>
           <div className="products-grid">
             {filteredProducts.map(product => (
               <div key={product._id} className="product-card">
                 <div className="product-image-container">
                   <img 
-                    src={product.images?.[0] || product.image || 'https://via.placeholder.com/300x300?text=No+Image'} 
+                    src={product.images?.[0] || product.image || 'https://via.placeholder.com/300x300?text=Tape+%2F+Wick'} 
                     alt={product.name} 
                     className="product-image"
                     onClick={() => viewProductDetails(product._id)}
@@ -428,10 +428,25 @@ const Home = ({ user, onLogout }) => {
                   </h3>
                   <p className="product-brand">{product.brand}</p>
                   <p className="product-category">{product.category}</p>
+                  <div className="product-specs">
+                    {product.specifications?.width && <span>Width: {product.specifications.width}</span>}
+                    {product.specifications?.material && <span>Material: {product.specifications.material}</span>}
+                  </div>
                   <div className="price-container">
                     <span className="current-price">{formatPrice(product.price)}</span>
+                    <span className="unit-text">per {product.unit || 'Kg'}</span>
                     {product.originalPrice && product.originalPrice > product.price && (
                       <span className="original-price">{formatPrice(product.originalPrice)}</span>
+                    )}
+                  </div>
+                  <div className="stock-info">
+                    {product.stock > 0 ? (
+                      <span className="in-stock">✅ {product.stock} {product.unit || 'Kg'} available</span>
+                    ) : (
+                      <span className="out-of-stock">❌ Out of stock</span>
+                    )}
+                    {product.minimumOrder && (
+                      <span className="min-order">Min order: {product.minimumOrder} {product.unit || 'Kg'}</span>
                     )}
                   </div>
                   <div className="rating">
@@ -439,8 +454,12 @@ const Home = ({ user, onLogout }) => {
                     <span>({product.rating})</span>
                   </div>
                   <div className="product-actions">
-                    <button onClick={() => addToCart(product)} className="add-to-cart-btn">
-                      Add to Cart
+                    <button 
+                      onClick={() => addToCart(product)} 
+                      className="add-to-cart-btn"
+                      disabled={product.stock === 0}
+                    >
+                      🛒 Add to Cart
                     </button>
                     <button onClick={() => addToWishlist(product)} className="wishlist-heart-btn">
                       ♡
