@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
-const PORT = parseInt(process.env.PORT) || 8000;
+const PORT = parseInt(process.env.PORT) || 8001;
 
 // Middleware
 app.use(cors());
@@ -266,6 +266,10 @@ const adminSchema = new mongoose.Schema({
   role: {
     type: String,
     default: 'admin'
+  },
+  shopName: {
+    type: String,
+    default: 'Sri Saravana Textile'
   }
 });
 
@@ -743,6 +747,35 @@ app.put('/api/admin/products/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating product'
+    });
+  }
+});
+
+// Delete product
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully',
+      product: deletedProduct
+    });
+
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting product'
     });
   }
 });

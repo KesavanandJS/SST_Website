@@ -9,7 +9,7 @@ const CompareModal = ({ compareList, setCompareList, onClose, onAddToCart, remov
   const clearCompare = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8001/api/user/compare', {
+      const response = await fetch('http://localhost:8000/api/user/compare', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

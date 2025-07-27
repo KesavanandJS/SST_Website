@@ -53,7 +53,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/products');
+      const response = await fetch('http://localhost:8000/api/products');
       const result = await response.json();
       if (result.success) {
         setProducts(result.products);
@@ -65,7 +65,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/orders');
+      const response = await fetch('http://localhost:8000/api/orders');
       const data = await response.json();
       setOrders(data.orders || []);
     } catch (error) {
@@ -76,7 +76,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/users');
+      const response = await fetch('http://localhost:8000/api/users');
       const data = await response.json();
       setUsers(data.users || []);
     } catch (error) {
@@ -87,7 +87,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/analytics');
+      const response = await fetch('http://localhost:8000/api/analytics');
       const data = await response.json();
       setAnalytics(data || {});
     } catch (error) {
@@ -98,7 +98,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/orders/${orderId}`, {
+      const response = await fetch(`http://localhost:8000/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -118,26 +118,18 @@ const AdminDashboard = ({ admin, onLogout }) => {
         method: 'DELETE'
       });
       
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        // Update the products list by removing the deleted product
-        setProducts(products.filter(product => product._id !== productId));
+      if (response.ok) {
+        fetchProducts(); // Refresh products
         setShowConfirmDelete(null);
-        alert('Product deleted successfully!');
-      } else {
-        alert('Error: ' + (result.message || 'Failed to delete product'));
-        console.error('Delete product error:', result);
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error deleting product. Please check if the server is running.');
     }
   };
 
   const deleteUser = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/users/${userId}`, {
+      const response = await fetch(`http://localhost:8000/api/users/${userId}`, {
         method: 'DELETE'
       });
       
@@ -163,60 +155,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
     } else {
       setNewProduct(prev => ({ ...prev, [name]: value }));
     }
-  };
-
-  // Handle image field changes
-  const handleImageChange = (index, value) => {
-    const updatedImages = [...newProduct.images];
-    updatedImages[index] = value;
-    setNewProduct(prev => ({
-      ...prev,
-      images: updatedImages
-    }));
-  };
-
-  // Add new image field
-  const addImageField = () => {
-    setNewProduct(prev => ({
-      ...prev,
-      images: [...prev.images, '']
-    }));
-  };
-
-  // Remove image field
-  const removeImage = (index) => {
-    const updatedImages = newProduct.images.filter((_, i) => i !== index);
-    setNewProduct(prev => ({
-      ...prev,
-      images: updatedImages
-    }));
-  };
-
-  // Handle feature changes
-  const handleFeatureChange = (index, value) => {
-    const updatedFeatures = [...newProduct.features];
-    updatedFeatures[index] = value;
-    setNewProduct(prev => ({
-      ...prev,
-      features: updatedFeatures
-    }));
-  };
-
-  // Add new feature field
-  const addFeatureField = () => {
-    setNewProduct(prev => ({
-      ...prev,
-      features: [...prev.features, '']
-    }));
-  };
-
-  // Remove feature field
-  const removeFeature = (index) => {
-    const updatedFeatures = newProduct.features.filter((_, i) => i !== index);
-    setNewProduct(prev => ({
-      ...prev,
-      features: updatedFeatures
-    }));
   };
 
   const resetForm = () => {
@@ -253,44 +191,29 @@ const AdminDashboard = ({ admin, onLogout }) => {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
-      // Filter out empty features and images
-      const filteredFeatures = newProduct.features.filter(feature => feature.trim() !== '');
-      const filteredImages = newProduct.images.filter(image => image.trim() !== '');
-      
-      // Validate required fields
-      if (!newProduct.name || !newProduct.price || !newProduct.description || filteredImages.length === 0) {
-        alert('Please fill in all required fields and add at least one image.');
-        return;
-      }
-
-      const productData = {
-        ...newProduct,
-        images: filteredImages,
-        features: filteredFeatures,
-        addedBy: admin?.username || 'admin'
-      };
-
       const response = await fetch('http://localhost:8000/api/admin/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(productData)
+        body: JSON.stringify({
+          ...newProduct,
+          addedBy: admin?.username || 'admin'
+        })
       });
 
       const result = await response.json();
-      if (response.ok && result.success) {
+      if (result.success) {
         setProducts([result.product, ...products]);
         resetForm();
         setShowAddForm(false);
         alert('Product added successfully!');
       } else {
-        alert('Error: ' + (result.message || 'Failed to add product'));
-        console.error('Add product error:', result);
+        alert('Error: ' + result.message);
       }
     } catch (error) {
       console.error('Error adding product:', error);
-      alert('Error adding product. Please check if the server is running on port 8001.');
+      alert('Error adding product');
     }
   };
 
@@ -553,185 +476,6 @@ const AdminDashboard = ({ admin, onLogout }) => {
                           onChange={handleInputChange}
                           required
                         />
-                      </div>
-                      <div className="form-row">
-                        <textarea
-                          name="description"
-                          placeholder="Product Description"
-                          value={newProduct.description}
-                          onChange={handleInputChange}
-                          rows="3"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Product Images Section */}
-                    <div className="form-section">
-                      <h4>🖼️ Product Images</h4>
-                      <div className="image-upload-section">
-                        {newProduct.images.map((image, index) => (
-                          <div key={index} className="image-upload-group">
-                            <input
-                              type="url"
-                              placeholder={`Image URL ${index + 1} (e.g., https://example.com/image.jpg)`}
-                              value={image}
-                              onChange={(e) => handleImageChange(index, e.target.value)}
-                            />
-                            {newProduct.images.length > 1 && (
-                              <button 
-                                type="button" 
-                                onClick={() => removeImage(index)}
-                                className="remove-image-btn"
-                                title="Remove Image"
-                              >
-                                ×
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button 
-                          type="button" 
-                          onClick={addImageField}
-                          className="add-image-btn"
-                        >
-                          + Add Another Image
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Product Specifications Section */}
-                    <div className="form-section">
-                      <h4>🔧 Product Specifications</h4>
-                      <div className="specifications-grid">
-                        <input
-                          type="text"
-                          name="specifications.material"
-                          placeholder="Material (e.g., 100% Cotton)"
-                          value={newProduct.specifications.material}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.width"
-                          placeholder="Width (e.g., 25mm)"
-                          value={newProduct.specifications.width}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.thickness"
-                          placeholder="Thickness (e.g., 1.5mm)"
-                          value={newProduct.specifications.thickness}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.color"
-                          placeholder="Color (e.g., White, Natural)"
-                          value={newProduct.specifications.color}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.pattern"
-                          placeholder="Pattern (e.g., Plain, Herringbone)"
-                          value={newProduct.specifications.pattern}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.length"
-                          placeholder="Length (e.g., 100m roll)"
-                          value={newProduct.specifications.length}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.weight"
-                          placeholder="Weight (e.g., 250g/m)"
-                          value={newProduct.specifications.weight}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.tensileStrength"
-                          placeholder="Tensile Strength (e.g., 150 N/cm)"
-                          value={newProduct.specifications.tensileStrength}
-                          onChange={handleInputChange}
-                        />
-                        <select
-                          name="specifications.washable"
-                          value={newProduct.specifications.washable}
-                          onChange={handleInputChange}
-                        >
-                          <option value="">Washable?</option>
-                          <option value="Yes">Yes</option>
-                          <option value="No">No</option>
-                          <option value="Hand wash only">Hand wash only</option>
-                        </select>
-                        <input
-                          type="text"
-                          name="specifications.shrinkage"
-                          placeholder="Shrinkage (e.g., <3%)"
-                          value={newProduct.specifications.shrinkage}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.origin"
-                          placeholder="Country of Origin"
-                          value={newProduct.specifications.origin}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.gsm"
-                          placeholder="GSM (e.g., 180 GSM)"
-                          value={newProduct.specifications.gsm}
-                          onChange={handleInputChange}
-                        />
-                        <input
-                          type="text"
-                          name="specifications.weave"
-                          placeholder="Weave Type (e.g., Plain, Twill)"
-                          value={newProduct.specifications.weave}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Product Features Section */}
-                    <div className="form-section">
-                      <h4>⭐ Product Features</h4>
-                      <div className="features-section">
-                        {newProduct.features.map((feature, index) => (
-                          <div key={index} className="feature-input-group">
-                            <input
-                              type="text"
-                              placeholder={`Feature ${index + 1} (e.g., High Durability)`}
-                              value={feature}
-                              onChange={(e) => handleFeatureChange(index, e.target.value)}
-                            />
-                            {newProduct.features.length > 1 && (
-                              <button 
-                                type="button" 
-                                onClick={() => removeFeature(index)}
-                                className="remove-feature-btn"
-                                title="Remove Feature"
-                              >
-                                ×
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button 
-                          type="button" 
-                          onClick={addFeatureField}
-                          className="add-feature-btn"
-                        >
-                          + Add Another Feature
-                        </button>
                       </div>
                     </div>
 

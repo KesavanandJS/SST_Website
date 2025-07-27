@@ -5,7 +5,9 @@ import Home from './components/Home';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import About from './components/About';
+import { ToastProvider } from './context/ToastContext';
 import './App.css';
+import './styles/responsive-utilities.css';
 
 function App() {
   const [currentView, setCurrentView] = useState('about');
@@ -66,54 +68,64 @@ function App() {
 
   // Admin view
   if (isAdminAuthenticated && admin) {
-    return <AdminDashboard admin={admin} onLogout={handleAdminLogout} />;
+    return (
+      <ToastProvider>
+        <AdminDashboard admin={admin} onLogout={handleAdminLogout} />
+      </ToastProvider>
+    );
   }
 
   // User view
   if (isAuthenticated && user) {
-    return <Home user={user} onLogout={handleLogout} />;
+    return (
+      <ToastProvider>
+        <Home user={user} onLogout={handleLogout} />
+      </ToastProvider>
+    );
   }
 
   return (
-    <div className="App">
-      {currentView === 'about' && (
-        <About onViewProducts={handleViewProducts} />
-      )}
-      {currentView === 'login' && (
-        <>
-          <Login switchToSignup={switchToSignup} onLogin={handleLogin} />
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button onClick={switchToAdminLogin} className="link-button">
-              Admin Login
-            </button>
-            <span style={{ margin: '0 10px', color: '#ccc' }}>|</span>
-            <button onClick={switchToAbout} className="link-button">
-              ← Back to About
-            </button>
-          </div>
-        </>
-      )}
-      {currentView === 'signup' && (
-        <>
-          <Signup switchToLogin={switchToLogin} />
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button onClick={switchToAbout} className="link-button">
-              ← Back to About
-            </button>
-          </div>
-        </>
-      )}
-      {currentView === 'adminLogin' && (
-        <>
-          <AdminLogin onAdminLogin={handleAdminLogin} switchToUserLogin={switchToUserLogin} />
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button onClick={switchToAbout} className="link-button">
-              ← Back to About
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+    <ToastProvider>
+      <div className="App">
+        {currentView === 'about' && (
+          <About onViewProducts={handleViewProducts} />
+        )}
+        {currentView === 'login' && (
+          <>
+            <Login switchToSignup={switchToSignup} onLogin={handleLogin} />
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+              <button onClick={switchToAdminLogin} className="link-button">
+                Admin Login
+              </button>
+              <span style={{ margin: '0 10px', color: '#ccc' }}>|</span>
+              <button onClick={switchToAbout} className="link-button">
+                ← Back to About
+              </button>
+            </div>
+          </>
+        )}
+        {currentView === 'signup' && (
+          <>
+            <Signup switchToLogin={switchToLogin} />
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+              <button onClick={switchToAbout} className="link-button">
+                ← Back to About
+              </button>
+            </div>
+          </>
+        )}
+        {currentView === 'adminLogin' && (
+          <>
+            <AdminLogin onAdminLogin={handleAdminLogin} switchToUserLogin={switchToUserLogin} />
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+              <button onClick={switchToAbout} className="link-button">
+                ← Back to About
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </ToastProvider>
   );
 }
 

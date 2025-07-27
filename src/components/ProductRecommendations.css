@@ -4,10 +4,15 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
-  padding: 24px;
-  margin: 24px 0;
+  padding: clamp(16px, 4vw, 24px);
+  margin: clamp(32px, 6vw, 48px) auto;
   border: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  position: relative;
+  grid-area: recommendations;
 }
 
 [data-theme="dark"] .recommendations-container {
@@ -133,8 +138,12 @@
 /* Grid */
 .recommendations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+  gap: clamp(16px, 3vw, 20px);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  justify-content: center;
 }
 
 /* Product Cards */
@@ -215,6 +224,7 @@
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 0.2s ease;
@@ -371,24 +381,50 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .recommendations-container {
-    padding: 16px;
-    margin: 16px 0;
+    padding: clamp(14px, 3.5vw, 20px);
+    margin: clamp(20px, 4.5vw, 32px) 0;
   }
   
   .recommendations-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+    gap: clamp(14px, 3vw, 18px);
+    max-width: 100%;
+  }
+  
+  .recommendations-header h3 {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .recommendations-container {
+    padding: clamp(12px, 3vw, 16px);
+    margin: clamp(16px, 4vw, 24px) 0;
+    border-radius: 16px;
+  }
+  
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+    gap: clamp(12px, 3vw, 16px);
   }
   
   .recommendations-tabs {
     gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .recommendations-tabs::-webkit-scrollbar {
+    display: none;
   }
   
   .recommendations-tab {
     padding: 10px 12px;
     font-size: 12px;
+    flex-shrink: 0;
   }
   
   .recommendation-image {
@@ -397,5 +433,46 @@
   
   .recommendation-details {
     padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recommendations-container {
+    padding: clamp(10px, 2.5vw, 14px);
+    margin: clamp(12px, 3vw, 20px) 0;
+    border-radius: 12px;
+  }
+  
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+    gap: clamp(10px, 2.5vw, 14px);
+  }
+  
+  .recommendations-header h3 {
+    font-size: 1.4rem;
+  }
+  
+  .recommendations-header p {
+    font-size: 13px;
+  }
+  
+  .recommendation-image {
+    height: 130px;
+  }
+  
+  .recommendation-details {
+    padding: 10px;
+  }
+  
+  .recommendation-name {
+    font-size: 13px;
+  }
+  
+  .recommendation-brand {
+    font-size: 11px;
+  }
+  
+  .current-price {
+    font-size: 14px;
   }
 }

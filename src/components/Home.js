@@ -34,7 +34,9 @@ const Home = ({ user, onLogout }) => {
     minPrice: '',
     maxPrice: '',
     brand: '',
-    rating: ''
+    category: '',
+    rating: '',
+    inStock: false
   });
 
   const { success, error, info } = useToast();
@@ -77,7 +79,7 @@ const Home = ({ user, onLogout }) => {
       const headers = getAuthHeaders();
       
       // Load cart
-      const cartResponse = await fetch('http://localhost:8001/api/user/cart', { headers });
+      const cartResponse = await fetch('http://localhost:8000/api/user/cart', { headers });
       if (cartResponse.ok) {
         const cartResult = await cartResponse.json();
         if (cartResult.success) {
@@ -91,7 +93,7 @@ const Home = ({ user, onLogout }) => {
       }
 
       // Load wishlist
-      const wishlistResponse = await fetch('http://localhost:8001/api/user/wishlist', { headers });
+      const wishlistResponse = await fetch('http://localhost:8000/api/user/wishlist', { headers });
       if (wishlistResponse.ok) {
         const wishlistResult = await wishlistResponse.json();
         if (wishlistResult.success) {
@@ -104,7 +106,7 @@ const Home = ({ user, onLogout }) => {
       }
 
       // Load compare list
-      const compareResponse = await fetch('http://localhost:8001/api/user/compare', { headers });
+      const compareResponse = await fetch('http://localhost:8000/api/user/compare', { headers });
       if (compareResponse.ok) {
         const compareResult = await compareResponse.json();
         if (compareResult.success) {
@@ -126,11 +128,13 @@ const Home = ({ user, onLogout }) => {
       if (selectedCategory !== 'All') params.append('category', selectedCategory);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
-      if (filters.sortBy) params.append('sortBy', filters.sortBy);
+      if (filters.brand) params.append('brand', filters.brand);
+      if (filters.category) params.append('category', filters.category);
+      if (filters.rating) params.append('rating', filters.rating);
       if (filters.inStock) params.append('inStock', 'true');
       if (searchTerm) params.append('search', searchTerm);
 
-      const response = await fetch(`http://localhost:8001/api/products?${params}`);
+      const response = await fetch(`http://localhost:8000/api/products?${params}`);
       const result = await response.json();
       if (result.success) {
         // Ensure each product has required fields
@@ -158,15 +162,22 @@ const Home = ({ user, onLogout }) => {
                         (!filters.maxPrice || product.price <= filters.maxPrice);
     const matchesBrand = !filters.brand || 
                         product.brand.toLowerCase().includes(filters.brand.toLowerCase());
+    const matchesFilterCategory = !filters.category || product.category === filters.category;
     const matchesRating = !filters.rating || product.rating >= filters.rating;
+    const matchesStock = !filters.inStock || product.stock > 0;
     
-    return matchesSearch && matchesCategory && matchesPrice && matchesBrand && matchesRating;
+    return matchesSearch && matchesCategory && matchesPrice && matchesBrand && matchesFilterCategory && matchesRating && matchesStock;
   });
 
   const addToCart = async (product) => {
+    if (!user) {
+      error('Authentication required', 'Please login to add items to cart');
+      return;
+    }
+    
     try {
       const headers = getAuthHeaders();
-      const response = await fetch('http://localhost:8001/api/user/cart', {
+      const response = await fetch('http://localhost:8000/api/user/cart', {
         method: 'POST',
         headers,
         body: JSON.stringify({ productId: product._id, quantity: 1 })
@@ -194,9 +205,14 @@ const Home = ({ user, onLogout }) => {
   };
 
   const addToWishlist = async (product) => {
+    if (!user) {
+      error('Authentication required', 'Please login to add items to wishlist');
+      return;
+    }
+    
     try {
       const headers = getAuthHeaders();
-      const response = await fetch('http://localhost:8001/api/user/wishlist', {
+      const response = await fetch('http://localhost:8000/api/user/wishlist', {
         method: 'POST',
         headers,
         body: JSON.stringify({ productId: product._id })
@@ -223,9 +239,19 @@ const Home = ({ user, onLogout }) => {
   };
 
   const addToCompare = async (product) => {
+    if (!user) {
+      error('Authentication required', 'Please login to compare products');
+      return;
+    }
+
+    if (compareList.length >= 3) {
+      error('Compare list full', 'You can only compare up to 3 products at a time');
+      return;
+    }
+    
     try {
       const headers = getAuthHeaders();
-      const response = await fetch('http://localhost:8001/api/user/compare', {
+      const response = await fetch('http://localhost:8000/api/user/compare', {
         method: 'POST',
         headers,
         body: JSON.stringify({ productId: product._id })
@@ -253,7 +279,7 @@ const Home = ({ user, onLogout }) => {
 
   const viewProductDetails = async (productId) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/products/${productId}`);
+      const response = await fetch(`http://localhost:8000/api/products/${productId}`);
       const result = await response.json();
       if (result.success) {
         setSelectedProduct(result.product);
@@ -266,7 +292,7 @@ const Home = ({ user, onLogout }) => {
   const removeFromWishlist = async (productId) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8001/api/user/wishlist/${productId}`, {
+      const response = await fetch(`http://localhost:8000/api/user/wishlist/${productId}`, {
         method: 'DELETE',
         headers
       });
@@ -289,7 +315,7 @@ const Home = ({ user, onLogout }) => {
   const updateCartQuantity = async (productId, quantity) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8001/api/user/cart/${productId}`, {
+      const response = await fetch(`http://localhost:8000/api/user/cart/${productId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ quantity })
@@ -314,7 +340,7 @@ const Home = ({ user, onLogout }) => {
   const removeFromCart = async (productId) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8001/api/user/cart/${productId}`, {
+      const response = await fetch(`http://localhost:8000/api/user/cart/${productId}`, {
         method: 'DELETE',
         headers
       });
@@ -338,7 +364,7 @@ const Home = ({ user, onLogout }) => {
   const removeFromCompare = async (productId) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://localhost:8001/api/user/compare/${productId}`, {
+      const response = await fetch(`http://localhost:8000/api/user/compare/${productId}`, {
         method: 'DELETE',
         headers
       });
@@ -375,7 +401,7 @@ const Home = ({ user, onLogout }) => {
     <div className="home-container">
       <header className="header">
         <div className="header-content">
-          <h1 className="logo">🧵 Sri Saravana Textile</h1>
+          <h1 className="logo">Sri Saravana Textile</h1>
           <div className="search-bar">
             <input
               type="text"
@@ -505,15 +531,15 @@ const Home = ({ user, onLogout }) => {
               </div>
             ))}
           </div>
-          
-          {/* Product Recommendations */}
-          <ProductRecommendations 
-            currentProducts={filteredProducts}
-            user={user}
-            onAddToCart={addToCart}
-            onAddToWishlist={addToWishlist}
-          />
         </section>
+
+        {/* Product Recommendations */}
+        <ProductRecommendations 
+          currentProducts={filteredProducts}
+          user={user}
+          onAddToCart={addToCart}
+          onAddToWishlist={addToWishlist}
+        />
       </main>
 
       {/* Product Details Modal */}

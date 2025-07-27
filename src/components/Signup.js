@@ -69,7 +69,7 @@ const Signup = ({ switchToLogin }) => {
       setIsLoading(true);
       
       try {
-        const response = await fetch('http://localhost:8001/api/signup', {
+        const response = await fetch('http://localhost:8000/api/signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
