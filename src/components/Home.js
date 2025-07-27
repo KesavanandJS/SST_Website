@@ -53,18 +53,33 @@ const Home = ({ user, onLogout }) => {
     }
   }, [user]);
 
-  // Auto-refresh cart every 30 seconds if enabled
+  // Auto-refresh products and user data every 30 seconds to sync with admin changes
   useEffect(() => {
     let interval;
-    if (autoRefreshCart && user) {
+    if (user) {
       interval = setInterval(() => {
-        loadUserData();
+        fetchProducts(); // Refresh products to sync with admin deletions
+        if (autoRefreshCart) {
+          loadUserData(); // Refresh user data if auto-refresh is enabled
+        }
       }, 30000);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [autoRefreshCart, user]);
+  }, [user, autoRefreshCart, selectedCategory, filters]);
+
+  // Refresh products when window comes into focus (user returns to tab)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchProducts(); // Sync with any admin changes when user returns to page
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, selectedCategory, filters]);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');

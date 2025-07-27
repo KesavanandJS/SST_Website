@@ -53,7 +53,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/products');
+      const response = await fetch('http://localhost:8000/api/products');
       const result = await response.json();
       if (result.success) {
         setProducts(result.products);
@@ -65,7 +65,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/orders');
+      const response = await fetch('http://localhost:8000/api/orders');
       const data = await response.json();
       setOrders(data.orders || []);
     } catch (error) {
@@ -76,7 +76,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/users');
+      const response = await fetch('http://localhost:8000/api/users');
       const data = await response.json();
       setUsers(data.users || []);
     } catch (error) {
@@ -87,7 +87,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/analytics');
+      const response = await fetch('http://localhost:8000/api/analytics');
       const data = await response.json();
       setAnalytics(data || {});
     } catch (error) {
@@ -98,7 +98,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/orders/${orderId}`, {
+      const response = await fetch(`http://localhost:8000/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -137,7 +137,7 @@ const AdminDashboard = ({ admin, onLogout }) => {
 
   const deleteUser = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/users/${userId}`, {
+      const response = await fetch(`http://localhost:8000/api/users/${userId}`, {
         method: 'DELETE'
       });
       
